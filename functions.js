@@ -2,7 +2,10 @@ const isString = require('is-string-and-not-blank');
 const { sendMail } = require('./mail');
 
 function getDateString () {
-    return new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const now = new Date();
+    const day = now.toISOString().slice(0, 10);
+    const time = now.getHours() + ':' + now.getMinutes() + ":" + now.getSeconds();
+    return `${ day } ${ time }`;
 }
 
 function log (message) {
