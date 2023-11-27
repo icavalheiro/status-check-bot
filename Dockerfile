@@ -1,9 +1,9 @@
 FROM node
 
-COPY . /app
-
 WORKDIR /app
+
+COPY . .
 
 RUN npm ci
 
-CMD "node bot.js"
+CMD ["node", "./bot.js"]
