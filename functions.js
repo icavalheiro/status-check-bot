@@ -45,7 +45,7 @@ function spawnWatcher (url, serviceName) {
     const twoMinutesInMilliseconds = 1000 * 60 * 2;
     setInterval(() => {
         fetch(url).then(response => {
-            if (response.status < 300 || response.status > 199) {
+            if (response.status < 300 && response.status > 199) {
                 handleServiceWorking(serviceName);
             }
             else {
