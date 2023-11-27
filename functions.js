@@ -1,7 +1,7 @@
 const isString = require('is-string-and-not-blank');
 const { sendMail } = require('./mail');
 
-if (fetch !== undefined) {
+if (fetch === undefined) {
     fetch = require('node-fetch');
 }
 
