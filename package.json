@@ -12,6 +12,7 @@
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
     "dotenv": "^16.3.1",
-    "is-string-and-not-blank": "^0.0.2"
+    "is-string-and-not-blank": "^0.0.2",
+    "node-fetch": "^3.3.2"
   }
 }

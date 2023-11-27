@@ -1,6 +1,10 @@
 const isString = require('is-string-and-not-blank');
 const { sendMail } = require('./mail');
 
+if (fetch !== undefined) {
+    fetch = require('node-fetch');
+}
+
 function getDateString () {
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
