@@ -17,24 +17,46 @@ function log (message) {
     console.log(`[${ dateNow }] ${ message }`);
 }
 
-function handleServiceWorking (serviceName) {
-    log(`Service ${ serviceName } working.`);
+function handleServiceWorking (serviceName, sendBackOnlineEmail, wasOfflineForMinutes) {
+    // enable this to flood the logs with "working" logs
+    // log(`Service ${ serviceName } working.`);
+
+    if (sendBackOnlineEmail) {
+        log(`Service ${ serviceName } working.`);
+        log(`✅ Sending email alerting for service ${ serviceName } coming back online after ${ wasOfflineForMinutes } minutes...`);
+        sendMail(getBackOnlineMessageForService(serviceName, wasOfflineForMinutes), serviceName, (err) => {
+            if (err) {
+                log(`Failed to send email for service ${ serviceName }, error:\n${ err }`);
+            }
+            else {
+                log(`Email sent for service ${ serviceName }`);
+            }
+        });
+    }
+}
+
+function handleServiceNotWorking (serviceName, sendEmail) {
+    log(`❌ Service ${ serviceName } is not responding`);
+
+    if (sendEmail) {
+        log(`Sending email alerting for service ${ serviceName } being offline...`);
+        sendMail(getErrorMessageForService(serviceName), serviceName, (err) => {
+            if (err) {
+                log(`Failed to send email for service ${ serviceName }, error:\n${ err }`);
+            }
+            else {
+                log(`Email sent for service ${ serviceName }`);
+            }
+        });
+    }
 }
 
 function getErrorMessageForService (serviceName) {
-    return `The service ${ serviceName } is not responding at time ${ getDateString() }`;
+    return `❌ The service ${ serviceName } is not responding at time ${ getDateString() }`;
 }
 
-function handleServiceNotWorking (serviceName) {
-    log(`Service ${ serviceName } is not responding. Sending email...`);
-    sendMail(getErrorMessageForService(serviceName), serviceName, (err) => {
-        if (err) {
-            log(`Failed to send email for service ${ serviceName }, error:\n${ err }`);
-        }
-        else {
-            log(`Email sent for service ${ serviceName }`);
-        }
-    });
+function getBackOnlineMessageForService (serviceName, timeSpentOfflineMinutes) {
+    return `✅ The service ${ serviceName } is back online. It was offline for ${ timeSpentOfflineMinutes } minutes.`;
 }
 
 function parseIntoList (stringVal) {
@@ -43,16 +65,52 @@ function parseIntoList (stringVal) {
 
 function spawnWatcher (url, serviceName) {
     const twoMinutesInMilliseconds = 1000 * 60 * 2;
+    let isWorking = true;
+    let offlineSince = null;
+
+    const handleSuccess = () => {
+        if (!isWorking) {
+            //service back online \o/
+            isWorking = true;
+            const elapsedTimeOfflineSeconds = ((new Date().getTime()) - offlineSince.getTime()) / 1000;
+            offlineSince = null;
+            handleServiceWorking(serviceName, true, elapsedTimeOfflineSeconds / 60);
+        }
+        else {
+            //service keeps online
+            handleServiceWorking(serviceName, false, null);
+        }
+    };
+
+    const handleFailure = () => {
+        if (isWorking) {
+            //service just died :(
+            isWorking = false;
+            offlineSince = new Date();
+            handleServiceNotWorking(serviceName, true);
+        }
+        else {
+            //service still dead
+            handleServiceNotWorking(serviceName, false);
+        }
+    };
+
+    //start the async checks
     setInterval(() => {
         fetch(url).then(response => {
             if (response.status < 300 && response.status > 199) {
-                handleServiceWorking(serviceName);
+                try {
+                    handleSuccess();
+                }
+                catch (e) {
+                    console.log("ERROR: " + e);
+                }
             }
             else {
-                handleServiceNotWorking(serviceName);
+                handleFailure();
             }
         }).catch(_ => {
-            handleServiceNotWorking(serviceName);
+            handleFailure();
         });
     }, twoMinutesInMilliseconds);
 }

@@ -3,7 +3,13 @@ if (fs.existsSync('./.env')) {
     require('dotenv').config();
 }
 
+require('dotenv').config({ path: "../cadburyai_production/.env" });
+
 const { log, parseIntoList, spawnWatcher } = require('./functions');
+
+if (process.env.FAKE_EMAIL_SUBMISSION == "true") {
+    log("ATTENTION: FAKE EMAIL SUBMISSION SET TO TRUE, this should be used for debug only");
+}
 
 let urls = parseIntoList(process.env.URLS_TO_CHECK);
 let serviceNames = parseIntoList(process.env.SERVICE_NAMES_URLS_TO_CHECK);
@@ -22,5 +28,5 @@ for (let i = 0; i < urls.length; i++) {
 }
 
 log("Watchers started");
-log("Status: OK (running)")
+log("Status: OK (running)");
 
